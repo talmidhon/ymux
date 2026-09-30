@@ -1,0 +1,39 @@
+From: ymux contributors
+Subject: [PATCH] windows: suppress the native console for ConPTY clients
+
+A GUI-subsystem parent can otherwise surface a separate blank console when
+starting the client attached to the pseudoconsole. Keep the existing ConPTY
+startup attributes and request that Windows not create a visible native
+console.
+
+---
+ src/win/psuedocon.rs | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/src/win/psuedocon.rs b/src/win/psuedocon.rs
+index 686a9d1..838a61e 100644
+--- a/src/win/psuedocon.rs
++++ b/src/win/psuedocon.rs
+@@ -16,7 +16,8 @@ use winapi::shared::winerror::{HRESULT, S_OK};
+ use winapi::um::handleapi::*;
+ use winapi::um::processthreadsapi::*;
+ use winapi::um::winbase::{
+-    CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT, STARTF_USESTDHANDLES, STARTUPINFOEXW,
++    CREATE_NO_WINDOW, CREATE_UNICODE_ENVIRONMENT, EXTENDED_STARTUPINFO_PRESENT,
++    STARTF_USESTDHANDLES, STARTUPINFOEXW,
+ };
+ use winapi::um::wincon::COORD;
+ use winapi::um::winnt::HANDLE;
+@@ -139,7 +140,9 @@ impl ConPtySlave {
+                 ptr::null_mut(),
+                 ptr::null_mut(),
+                 0,
+-                EXTENDED_STARTUPINFO_PRESENT | CREATE_UNICODE_ENVIRONMENT,
++                EXTENDED_STARTUPINFO_PRESENT
++                    | CREATE_UNICODE_ENVIRONMENT
++                    | CREATE_NO_WINDOW,
+                 cmd.environment_block().as_mut_slice().as_mut_ptr() as *mut _,
+                 cwd.as_ref()
+                     .map(|c| c.as_slice().as_ptr())
+--
+2.47.0
